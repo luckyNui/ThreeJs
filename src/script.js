@@ -34,13 +34,16 @@ function init() {
     controls.maxPolarAngle = Math.PI / 2;
 
     const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+    const material = new THREE.MeshBasicMaterial( { color: '0x00ff00' } );
     cube = new THREE.Mesh( geometry, material );
-    scene.background = new THREE.Color( 0xcccccc );
-    cube.material.color.set( "blue" );
+    scene.background = new THREE.Color( 0xe6e6e6 );
+    cube.material.color.set( "grey" );
     cube.position.set(0,1,0)
     scene.add( cube );
     scene.add( gridHelper );
+
+    const axesHelper = new THREE.AxesHelper( 5 );
+    scene.add( axesHelper );
     
     const dirLight1 = new THREE.DirectionalLight( 0xffffff );
     dirLight1.position.set( 6, 2, 6);
@@ -54,6 +57,18 @@ function init() {
     scene.add( dirLight2 );
     scene.add( helper2 );
 
+    const dirLight3 = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    dirLight3.position.set( -6, 2, -6 );
+    const helper3 = new THREE.DirectionalLightHelper( dirLight3, 1 );
+    scene.add( dirLight3 );
+    scene.add( helper3 );
+
+    const dirLight4 = new THREE.DirectionalLight( 0xffffff , 0.5);
+    dirLight4.position.set( 6, 2, -6 );
+    const helper4 = new THREE.DirectionalLightHelper( dirLight4, 1 );
+    scene.add( dirLight4 );
+    scene.add( helper4 );
+
     const ambientLight = new THREE.AmbientLight( 0x4d4c4c  );
     scene.add( ambientLight );
     setupGui();
@@ -66,6 +81,7 @@ function animate() {
     } else {
         cube.rotation.x = 0;
         cube.rotation.y = 0;
+        cube.rotation.z = 0;
     }
 	
     controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
@@ -90,7 +106,7 @@ function setupGui() {
     const gui = new GUI();
     
     gui.add( effectController, 'spin' ).name( 'Spining' );
-    gui.add( effectController, 'newShading', [ 'wireframe', 'flat' ] ).name( 'Shading' ).onChange(render);
+    gui.add( effectController, 'newShading', [ 'wireframe', 'flat', 'smooth' ] ).name( 'Shading' ).onChange(render);
     gui.add(effectController, 'sphere').min(0).max(1).step(0.01).onChange(render);
     gui.add(effectController,'torsion').min(0).max(1).step(0.01).onChange(render);
     gui.add(effectController, 'width').min( 0 ).max( 2 ).onChange(render);
@@ -119,8 +135,10 @@ function renderCube() {
         scene.remove( cube );
 
     }
-    mat[ 'wireframe' ] = new THREE.MeshBasicMaterial( { wireframe: true } );
+    mat[ 'wireframe' ] = new THREE.MeshStandardMaterial( { wireframe: true } );
 	mat[ 'flat' ] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
+    mat[ 'smooth' ] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
+
     const geometry = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
 
     geometry.morphAttributes.position = [];
@@ -131,7 +149,7 @@ function renderCube() {
 	const spherePositions = [];
 	// for the second morph target, we'll twist the cubes vertices
 	const twistPositions = [];
-	const direction = new THREE.Vector3( 1, 0, 0 );
+	const direction = new THREE.Vector3( 0, 1, 0 ); // choisir le sens de la torsion ( x y z )
 	const vertex = new THREE.Vector3();
 	for ( let i = 0; i < positionAttribute.count; i ++ ) {
 		const x = positionAttribute.getX( i );
@@ -143,8 +161,8 @@ function renderCube() {
 			z * Math.sqrt( 1 - ( x * x / 2 ) - ( y * y / 2 ) + ( x * x * y * y / 3 ) )
             );
 		// stretch along the x-axis so we can see the twist better
-		vertex.set( x * 2, y, z );
-		vertex.applyAxisAngle( direction, Math.PI * x / 2 ).toArray( twistPositions, twistPositions.length );
+		vertex.set( x , y * 2, z );
+		vertex.applyAxisAngle( direction, Math.PI * y / 2 ).toArray( twistPositions, twistPositions.length );
         }
 	// add the spherical positions as the first morph target
 	geometry.morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
@@ -163,7 +181,9 @@ function renderCube() {
 
 function exportGLTF() {
     exporter = new GLTFExporter();
-    exporter.parse( scene, function ( result ) {
+    cube.rotation.x = 0;
+    cube.rotation.y = 0;    
+    exporter.parse( cube, function ( result ) {
 
         if ( result instanceof ArrayBuffer ) {
 

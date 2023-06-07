@@ -8,6 +8,9 @@ let radianX = 0 , radianY = 0, radianZ = 0 ;
 let ambientLight;
 let dirLight1, dirLight2, dirLight3 , dirLight4 ;
 let helper1, helper2, helper3 , helper4 ;
+
+
+
 init();
 animate();
 
@@ -124,10 +127,10 @@ function renderCube() {
         scene.remove( cube );
 
     }
-    mat[ 'wireframe' ] = new THREE.MeshStandardMaterial( { wireframe: true } );
-	mat[ 'flat' ] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
-    mat[ 'smooth' ] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
-    mat['basic'] = new THREE.MeshBasicMaterial(  );
+    mat[ 'wireframe'] = new THREE.MeshStandardMaterial( { wireframe: true } );
+	mat[ 'flat'] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
+    mat[ 'smooth'] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
+    mat['basic'] = new THREE.MeshBasicMaterial( );
 
     const geometry = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
 
@@ -141,6 +144,7 @@ function renderCube() {
 	const twistPositions = [];
 	const direction = new THREE.Vector3( 0, 1, 0 ); // choisir le sens de la torsion ( x y z )
 	const vertex = new THREE.Vector3();
+
 	for ( let i = 0; i < positionAttribute.count; i ++ ) {
 		const x = positionAttribute.getX( i );
 		const y = positionAttribute.getY( i );
@@ -151,9 +155,10 @@ function renderCube() {
 			z * Math.sqrt( 1 - ( x * x / 2 ) - ( y * y / 2 ) + ( x * x * y * y / 3 ) )
             );
 		// stretch along the x-axis so we can see the twist better
-		vertex.set( x , y * 2 , z );
+		vertex.set( x, y * 2 , z );
 		vertex.applyAxisAngle( direction, Math.PI * y / 2 ).toArray( twistPositions, twistPositions.length );
         }
+    
 	// add the spherical positions as the first morph target
 	geometry.morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
 	// add the twisted positions as the second morph target
@@ -162,6 +167,8 @@ function renderCube() {
     cube = new THREE.Mesh( geometry, mat[effectController.newShading] );
     cube.morphTargetInfluences[ 0 ] = effectController.sphere;
     cube.morphTargetInfluences[ 1 ] = effectController.torsion;
+
+
     scene.add(cube)
     cube.material.color.set( "grey" );
     cube.position.set(0,1,0)
@@ -303,3 +310,10 @@ function setupLights() {
 // checker dautre deformation possible maybe 
 // jouer avec le nombre de tesselation 
 // la couleur pour mieux voir ( gener des light)
+
+
+// ajouter control par arduino ?
+// ajouter serv node ? 
+// keep track des changement ? 
+// genre save les evolution dans un excel ?
+// bouger les lights ? 

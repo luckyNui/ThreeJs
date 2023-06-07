@@ -250,7 +250,7 @@ function creatreScene(){
 }
 function createCamera() {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-    camera.position.set( 0, 2, 5 );
+    camera.position.set( 0, 3, 5 );
 }
 
 function createRenderer() {
@@ -305,11 +305,8 @@ function setupLights() {
 // save en slt
 // mettre dans prusa 
 
-// checker les erreus chelou dans la consol
 
 // checker dautre deformation possible maybe 
-// jouer avec le nombre de tesselation 
-// la couleur pour mieux voir ( gener des light)
 
 
 // ajouter control par arduino ?

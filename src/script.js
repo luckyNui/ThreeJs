@@ -2,12 +2,20 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-let controls, cube, renderer, scene, camera, effectController, exporter,  mat = {};
+
+let controls, mesh, renderer, scene, camera, effectController, exporter,  mat = {};
 let radianX = 0 , radianY = 0, radianZ = 0 ;
 let ambientLight;
 let dirLight1, dirLight2, dirLight3 , dirLight4 ;
 let helper1, helper2, helper3 , helper4 ;
+let shape = {};
+
+let loader ;
+
+
+
 
 
 
@@ -32,11 +40,11 @@ function init() {
 
     const geometry = new THREE.BoxGeometry( 2, 2, 2 );
     const material = new THREE.MeshLambertMaterial( {  side: THREE.DoubleSide } );
-    cube = new THREE.Mesh( geometry, material );
-    cube.material.color.set( "grey" );
-    cube.position.set(0,1,0)
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.material.color.set( "grey" );
+    mesh.position.set(0,1,0)
 
-    scene.add( cube );
+    scene.add( mesh );
     //scene.add( gridHelper );
 
     const axesHelper = new THREE.AxesHelper( 5 );
@@ -67,16 +75,16 @@ function animate() {
         radianX += 0.01;
         radianY += 0.01;
         radianZ += 0.01;
-        cube.rotation.x = radianX;
-        cube.rotation.y = radianY;
-        cube.rotation.z = radianZ;
+        mesh.rotation.x = radianX;
+        mesh.rotation.y = radianY;
+        mesh.rotation.z = radianZ;
     } else {
         radianX = 0;
         radianY = 0;
         radianZ = 0;
-        cube.rotation.x = 0;
-        cube.rotation.y = 0;
-        cube.rotation.z = 0;
+        mesh.rotation.x = 0;
+        mesh.rotation.y = 0;
+        mesh.rotation.z = 0;
     }
 	
     controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
@@ -87,20 +95,23 @@ function animate() {
 function setupGui() {
 
     effectController = {
-        width: 2,
-        height : 2,
-        depth : 2,
+        width: 1,
+        height : 1,
+        depth : 1,
         torsion: 0,
         sphere : 0,
         spin: true,
         newShading: 'flat',
         exportGLTF : exportGLTF,
-        tess : 10
+        tess : 10,
+        shape : 'Box',
+        upload : loadGLTFile
     };
     
     const gui = new GUI();
     
     gui.add(effectController, 'spin' ).name( 'Spining' );
+    gui.add(effectController, 'shape',['Box','Sphere']).name('Shape').onChange(render);
     gui.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).onChange(render);
     gui.add(effectController, 'sphere').min(-2).max(2).step(0.01).onChange(render);
     gui.add(effectController,'torsion').min(-2).max(2).step(0.01).onChange(render);
@@ -109,6 +120,7 @@ function setupGui() {
     gui.add(effectController, 'depth').min( 0 ).max( 2 ).onChange(render);
     gui.add(effectController, 'tess').min(1).max(64).step(1).onChange(render);
     gui.add(effectController, 'exportGLTF' ).name( 'Export' );
+    gui.add(effectController, 'upload').name('upload');
 
 }
 
@@ -116,31 +128,36 @@ function setupGui() {
 
 
 function render() {
-    renderCube();
+    if(effectController.shape == 'Box'){
+        renderCube();
+    }else{
+        renderShpere();
+    }
 }
 
 function renderCube() {
    
-    if ( cube !== undefined ) {
+    if ( mesh !== undefined ) {
 
-        cube.geometry.dispose();
-        scene.remove( cube );
+        mesh.geometry.dispose();
+        scene.remove( mesh );
 
     }
-    mat[ 'wireframe'] = new THREE.MeshStandardMaterial( { wireframe: true } );
-	mat[ 'flat'] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
-    mat[ 'smooth'] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
-    mat['basic'] = new THREE.MeshBasicMaterial( );
+    mat['wireframe'] = new THREE.MeshStandardMaterial( { wireframe: true } );
+    mat['flat'] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
+    mat['smooth'] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
+    mat['basic'] = new THREE.MeshBasicMaterial();
 
-    const geometry = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
+    // const geometry = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
+    shape['Box'] = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
+    shape['Sphere']= new THREE.SphereGeometry(effectController.height,effectController.tess,effectController.tess);
+    shape[effectController.shape].morphAttributes.position = [];
 
-    geometry.morphAttributes.position = [];
+    const positionAttribute = shape[effectController.shape].attributes.position;
 
-    const positionAttribute = geometry.attributes.position;
-
-	// for the first morph target we'll move the cube's vertices onto the surface of a sphere
+	// for the first morph target we'll move the mesh's vertices onto the surface of a sphere
 	const spherePositions = [];
-	// for the second morph target, we'll twist the cubes vertices
+	// for the second morph target, we'll twist the meshs vertices
 	const twistPositions = [];
 	const direction = new THREE.Vector3( 0, 1, 0 ); // choisir le sens de la torsion ( x y z )
 	const vertex = new THREE.Vector3();
@@ -160,30 +177,44 @@ function renderCube() {
         }
     
 	// add the spherical positions as the first morph target
-	geometry.morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
+	shape[effectController.shape].morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
 	// add the twisted positions as the second morph target
-	geometry.morphAttributes.position[ 1 ] = new THREE.Float32BufferAttribute( twistPositions, 3 );
+	shape[effectController.shape].morphAttributes.position[ 1 ] = new THREE.Float32BufferAttribute( twistPositions, 3 );
 
-    cube = new THREE.Mesh( geometry, mat[effectController.newShading] );
-    cube.morphTargetInfluences[ 0 ] = effectController.sphere;
-    cube.morphTargetInfluences[ 1 ] = effectController.torsion;
+    mesh = new THREE.Mesh( shape[effectController.shape], mat[effectController.newShading] );
+    mesh.morphTargetInfluences[ 0 ] = effectController.sphere;
+    mesh.morphTargetInfluences[ 1 ] = effectController.torsion;
 
 
-    scene.add(cube)
-    cube.material.color.set( "grey" );
-    cube.position.set(0,1,0)
-    cube.rotation.x = radianX;
-    cube.rotation.y = radianY;
-    cube.rotation.z = radianZ;
+    addMeshToScene();
 
 }
 
 
+function renderShpere() {
+    if ( mesh !== undefined ) {
+
+        mesh.geometry.dispose();
+        scene.remove( mesh );
+
+    }
+    mat['wireframe'] = new THREE.MeshStandardMaterial( { wireframe: true } );
+    mat['flat'] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
+    mat['smooth'] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
+    mat['basic'] = new THREE.MeshBasicMaterial();
+
+    const sphere = new THREE.SphereGeometry(effectController.height,effectController.tess,effectController.tess);
+    mesh = new THREE.Mesh( sphere, mat[effectController.newShading] );
+
+    addMeshToScene();
+   
+}
+
 function exportGLTF() {
     exporter = new GLTFExporter();
-    cube.rotation.x = 0;
-    cube.rotation.y = 0;    
-    exporter.parse( cube, function ( result ) {
+    mesh.rotation.x = 0;
+    mesh.rotation.y = 0;    
+    exporter.parse( mesh, function ( result ) {
 
         if ( result instanceof ArrayBuffer ) {
 
@@ -299,6 +330,38 @@ function setupLights() {
    
 }
 
+function addMeshToScene(){
+    scene.add(mesh)
+    mesh.material.color.set( "grey" );
+    mesh.position.set(0,1,0)
+    mesh.rotation.x = radianX;
+    mesh.rotation.y = radianY;
+    mesh.rotation.z = radianZ;
+}
+
+function loadGLTFile() {
+    loader = new GLTFLoader();
+
+    loader.load( 'model.glb', function ( gltf ) {
+        if ( mesh !== undefined ) {
+
+            mesh.geometry.dispose();
+            scene.remove( mesh );
+    
+        }
+        mesh = gltf.scene.children[0];
+        
+        //const ma = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
+        //mesh = new THREE.Mesh(go,ma)
+        scene.add( mesh );
+    
+    }, undefined, function ( error ) {
+    
+        console.error( error );
+    
+    } );
+}
+
 // save en glb 
 // faut stop le spin et mettre en basic mat
 // puis mettre sur blender 
@@ -314,3 +377,6 @@ function setupLights() {
 // keep track des changement ? 
 // genre save les evolution dans un excel ?
 // bouger les lights ? 
+
+// rajouter un truc qui recup le glb pour le reinjecter dedans 
+// checker pour dl en stl directement 

@@ -64,9 +64,9 @@ function init() {
 function animate() {
 	requestAnimationFrame( animate );
     if(effectController.spin){
-        radianX += 0.015;
-        radianY += 0.01;
-        radianZ += 0.01;
+        radianX += 0.005;
+        radianY += 0.005;
+        radianZ += 0.005;
         cube.rotation.x = radianX;
         cube.rotation.y = radianY;
         cube.rotation.z = radianZ;

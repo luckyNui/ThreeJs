@@ -111,7 +111,7 @@ function setupGui() {
     const gui = new GUI();
     
     gui.add(effectController, 'spin' ).name( 'Spining' );
-    gui.add(effectController, 'shape',['Box','Sphere']).name('Shape').onChange(render);
+    gui.add(effectController, 'shape',['Box','Sphere', 'upload']).name('Shape').onChange(render);
     gui.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).onChange(render);
     gui.add(effectController, 'sphere').min(-2).max(2).step(0.01).onChange(render);
     gui.add(effectController,'torsion').min(-2).max(2).step(0.01).onChange(render);
@@ -130,8 +130,10 @@ function setupGui() {
 function render() {
     if(effectController.shape == 'Box'){
         renderCube();
-    }else{
+    }else if(effectController.shape == 'Sphere'){
         renderShpere();
+    }else {
+        renderUploadedShape();
     }
 }
 
@@ -185,7 +187,6 @@ function renderCube() {
     mesh.morphTargetInfluences[ 0 ] = effectController.sphere;
     mesh.morphTargetInfluences[ 1 ] = effectController.torsion;
 
-
     addMeshToScene();
 
 }
@@ -209,6 +210,61 @@ function renderShpere() {
     addMeshToScene();
    
 }
+
+function renderUploadedShape(){
+    const meshCopyGeo = mesh.geometry;
+    const morph0 = mesh.morphTargetInfluences[0];
+    const morph1 = mesh.morphTargetInfluences[1];
+    if ( mesh !== undefined ) {
+
+        mesh.geometry.dispose();
+        scene.remove( mesh );
+
+    }
+    mat['wireframe'] = new THREE.MeshStandardMaterial( { wireframe: true } );
+    mat['flat'] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
+    mat['smooth'] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
+    mat['basic'] = new THREE.MeshBasicMaterial();
+    meshCopyGeo.morphAttributes.position = [];
+
+    const positionAttribute = meshCopyGeo.attributes.position;
+
+	// for the first morph target we'll move the mesh's vertices onto the surface of a sphere
+	const spherePositions = [];
+	// for the second morph target, we'll twist the meshs vertices
+	const twistPositions = [];
+	const direction = new THREE.Vector3( 0, 1, 0 ); // choisir le sens de la torsion ( x y z )
+	const vertex = new THREE.Vector3();
+
+	for ( let i = 0; i < positionAttribute.count; i ++ ) {
+		const x = positionAttribute.getX( i );
+		const y = positionAttribute.getY( i );
+		const z = positionAttribute.getZ( i );
+		spherePositions.push(
+			x * Math.sqrt( 1 - ( y * y / 2 ) - ( z * z / 2 ) + ( y * y * z * z / 3 ) ),
+			y * Math.sqrt( 1 - ( z * z / 2 ) - ( x * x / 2 ) + ( z * z * x * x / 3 ) ),
+			z * Math.sqrt( 1 - ( x * x / 2 ) - ( y * y / 2 ) + ( x * x * y * y / 3 ) )
+            );
+		// stretch along the x-axis so we can see the twist better
+		vertex.set( x, y * 2 , z );
+		vertex.applyAxisAngle( direction, Math.PI * y / 2 ).toArray( twistPositions, twistPositions.length );
+        }
+    
+	// add the spherical positions as the first morph target
+	meshCopyGeo.morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
+	// add the twisted positions as the second morph target
+	meshCopyGeo.morphAttributes.position[ 1 ] = new THREE.Float32BufferAttribute( twistPositions, 3 );
+
+
+    mesh = new THREE.Mesh( meshCopyGeo, mat[effectController.newShading] );
+    
+
+    mesh.morphTargetInfluences[ 0 ] = effectController.sphere;
+    mesh.morphTargetInfluences[ 1 ] = effectController.torsion ;
+    addMeshToScene();
+
+}
+
 
 function exportGLTF() {
     exporter = new GLTFExporter();
@@ -341,6 +397,7 @@ function addMeshToScene(){
 
 function loadGLTFile() {
     loader = new GLTFLoader();
+    effectController.shape = 'upload';
 
     loader.load( 'model.glb', function ( gltf ) {
         if ( mesh !== undefined ) {

@@ -441,3 +441,4 @@ function loadGLTFile() {
 
 
 // ajouter le drap and drop ( ex en message sur slack )
+// pour load un fichier juste changer le hmtml et rajoyer un endroit ou laod le ficher (copier exemple three js )

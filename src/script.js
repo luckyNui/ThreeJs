@@ -380,3 +380,6 @@ function loadGLTFile() {
 
 // rajouter un truc qui recup le glb pour le reinjecter dedans 
 // checker pour dl en stl directement 
+// quand tu es en mode mesh, get le mesh sans changer, genre comme faire dans le render
+// peut etre utiliser un switch case ?? 
+// deployer le site pour vanessa

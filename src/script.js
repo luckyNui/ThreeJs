@@ -260,7 +260,7 @@ function renderUploadedShape(){
     
 
     mesh.morphTargetInfluences[ 0 ] = effectController.sphere;
-    mesh.morphTargetInfluences[ 1 ] = effectController.torsion ;
+    mesh.morphTargetInfluences[ 1 ] = effectController.torsion;
     addMeshToScene();
 
 }
@@ -408,8 +408,6 @@ function loadGLTFile() {
         }
         mesh = gltf.scene.children[0];
         
-        //const ma = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
-        //mesh = new THREE.Mesh(go,ma)
         scene.add( mesh );
     
     }, undefined, function ( error ) {
@@ -440,3 +438,6 @@ function loadGLTFile() {
 // quand tu es en mode mesh, get le mesh sans changer, genre comme faire dans le render
 // peut etre utiliser un switch case ?? 
 // deployer le site pour vanessa
+
+
+// ajouter le drap and drop ( ex en message sur slack )

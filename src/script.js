@@ -100,7 +100,7 @@ function setupGui() {
         depth : 1,
         torsion: 0,
         sphere : 0,
-        spin: true,
+        spin: false,
         newShading: 'flat',
         exportGLTF : exportGLTF,
         tess : 10,
@@ -156,7 +156,7 @@ function renderCube() {
     shape[effectController.shape].morphAttributes.position = [];
 
     const positionAttribute = shape[effectController.shape].attributes.position;
-
+    console.log(positionAttribute);
 	// for the first morph target we'll move the mesh's vertices onto the surface of a sphere
 	const spherePositions = [];
 	// for the second morph target, we'll twist the meshs vertices
@@ -343,7 +343,8 @@ function createCamera() {
 function createRenderer() {
     renderer = new THREE.WebGLRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( renderer.domElement );
+    //document.body.appendChild( renderer.domElement );
+    document.getElementById("3d").appendChild(renderer.domElement);
 
 }
 
@@ -415,6 +416,21 @@ function loadGLTFile() {
         console.error( error );
     
     } );
+}
+
+const form = document.querySelector('form');
+form.addEventListener('submit', handleSubmit);
+
+
+function handleSubmit(event) {
+  const form = event.currentTarget;
+  const url = new URL(form.action);
+  const formData = new FormData(form);
+  const searchParams = new URLSearchParams(formData);
+  console.log(form);
+  console.log(url);
+  console.log(formData);
+  console.log(searchParams);
 }
 
 // save en glb 

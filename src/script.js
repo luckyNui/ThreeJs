@@ -3,7 +3,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
+import { NURBSSurface } from 'three/addons/curves/NURBSSurface.js';
+import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 
 let controls, mesh, renderer, scene, camera, effectController, exporter,  mat = {};
 let radianX = 0 , radianY = 0, radianZ = 0 ;
@@ -45,10 +46,10 @@ function init() {
     mesh.position.set(0,1,0)
 
     scene.add( mesh );
-    //scene.add( gridHelper );
+    scene.add( gridHelper );
 
     const axesHelper = new THREE.AxesHelper( 5 );
-    //scene.add( axesHelper );
+    scene.add( axesHelper );
     
     scene.add( dirLight1 );
     //scene.add( helper1 );
@@ -139,6 +140,55 @@ function render() {
     }
 }
 
+function renderNurbs(){
+    if ( mesh !== undefined ) {
+
+        mesh.geometry.dispose();
+        scene.remove( mesh );
+
+    }
+    const nsControlPoints = [
+        [
+            new THREE.Vector4( -2, - 2, 0, 1 ),
+            new THREE.Vector4( -2, 2, 0, 1 ),
+            new THREE.Vector4( 2, 2, 0, 1 ),
+            new THREE.Vector4( 2, -2,0, 1 )
+        ],
+        [
+            new THREE.Vector4( -2, - 2, 1, 1 ),
+            new THREE.Vector4( -2,  2, 1, 1 ),
+            new THREE.Vector4( 2, 2, 1, 1 ),
+            new THREE.Vector4( 2, -2, 1, 1 )
+        ],
+        [
+            new THREE.Vector4( -2, -2, 2, 1 ),
+            new THREE.Vector4( -2, 2, 2, 1 ),
+            new THREE.Vector4( 2, 2, 2, 1 ),
+            new THREE.Vector4( 2, -2, 2, 1 )
+        ]
+    ];
+    
+
+    const degree1 = 2;
+    const degree2 = 3;
+    const knots1 = [ 0, 0, 0, 1, 1, 1 ];
+    const knots2 = [ 0, 0, 0, 0, 1, 1, 1, 1 ];
+    const nurbsSurface = new NURBSSurface( degree1, degree2,knots1, knots2, nsControlPoints );
+
+    function getSurfacePoint( u, v, target ) {
+
+        return nurbsSurface.getPoint( u, v, target );
+
+    }
+
+    const geometry = new ParametricGeometry( getSurfacePoint, effectController.tess, effectController.tess );
+    const material = new THREE.MeshStandardMaterial( { wireframe: true } );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set( - 2, 1, 0 );
+    mesh.scale.multiplyScalar( 1 );
+    scene.add( mesh );
+}
+
 function renderCube() {
    
     if ( mesh !== undefined ) {
@@ -192,8 +242,6 @@ function renderCube() {
         
 		
     }
-
-
 
     
 	// add the spherical positions as the first morph target
@@ -267,7 +315,6 @@ function renderCube2() {
     addMeshToScene();
 
 }
-
 
 
 
@@ -511,6 +558,24 @@ function handleSubmit(event) {
   console.log(url);
   console.log(formData);
   console.log(searchParams);
+/** @type {Parameters<fetch>[1]} */
+const fetchOptions = {
+    method: form.method,
+  };
+
+  if (form.method.toLowerCase() === 'post') {
+    if (form.enctype === 'multipart/form-data') {
+      fetchOptions.body = formData;
+    } else {
+      fetchOptions.body = searchParams;
+    }
+  } else {
+    url.search = searchParams;
+  }
+
+  fetch(url, fetchOptions);
+
+  event.preventDefault();
 }
 
 // save en glb 

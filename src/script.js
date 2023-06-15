@@ -12,7 +12,7 @@ let ambientLight;
 let dirLight1, dirLight2, dirLight3 , dirLight4 ;
 let helper1, helper2, helper3 , helper4 ;
 let shape = {};
-
+let morph0 , morph1;
 let loader ;
 
 
@@ -107,7 +107,9 @@ function setupGui() {
         tess : 1,
         shape : 'Box',
         upload : loadGLTFile,
-        face : 6,
+        x : false,
+        y : true,
+        z : false
     };
     
     const gui = new GUI();
@@ -123,7 +125,10 @@ function setupGui() {
     gui.add(effectController, 'tess').min(1).max(64).step(1).onChange(render);
     gui.add(effectController, 'exportGLTF' ).name( 'Export' );
     gui.add(effectController, 'upload').name('upload');
-    gui.add(effectController, 'face').min(1).max(6).step(1).onChange(render);
+    gui.add(effectController, 'x' ).name( 'X' );
+    gui.add(effectController, 'y' ).name( 'Y' );
+    gui.add(effectController, 'z' ).name( 'Z' );
+
 
 }
 
@@ -132,63 +137,19 @@ function setupGui() {
 
 function render() {
     if(effectController.shape == 'Box'){
-        renderCube2();
+        renderCube();
     }else if(effectController.shape == 'Sphere'){
         renderShpere();
-    }else {
+    }else if (effectController.shape == 'upload') {
         renderUploadedShape();
     }
 }
 
-function renderNurbs(){
-    if ( mesh !== undefined ) {
 
-        mesh.geometry.dispose();
-        scene.remove( mesh );
 
-    }
-    const nsControlPoints = [
-        [
-            new THREE.Vector4( -2, - 2, 0, 1 ),
-            new THREE.Vector4( -2, 2, 0, 1 ),
-            new THREE.Vector4( 2, 2, 0, 1 ),
-            new THREE.Vector4( 2, -2,0, 1 )
-        ],
-        [
-            new THREE.Vector4( -2, - 2, 1, 1 ),
-            new THREE.Vector4( -2,  2, 1, 1 ),
-            new THREE.Vector4( 2, 2, 1, 1 ),
-            new THREE.Vector4( 2, -2, 1, 1 )
-        ],
-        [
-            new THREE.Vector4( -2, -2, 2, 1 ),
-            new THREE.Vector4( -2, 2, 2, 1 ),
-            new THREE.Vector4( 2, 2, 2, 1 ),
-            new THREE.Vector4( 2, -2, 2, 1 )
-        ]
-    ];
-    
 
-    const degree1 = 2;
-    const degree2 = 3;
-    const knots1 = [ 0, 0, 0, 1, 1, 1 ];
-    const knots2 = [ 0, 0, 0, 0, 1, 1, 1, 1 ];
-    const nurbsSurface = new NURBSSurface( degree1, degree2,knots1, knots2, nsControlPoints );
 
-    function getSurfacePoint( u, v, target ) {
-
-        return nurbsSurface.getPoint( u, v, target );
-
-    }
-
-    const geometry = new ParametricGeometry( getSurfacePoint, effectController.tess, effectController.tess );
-    const material = new THREE.MeshStandardMaterial( { wireframe: true } );
-    mesh = new THREE.Mesh( geometry, material );
-    mesh.position.set( - 2, 1, 0 );
-    mesh.scale.multiplyScalar( 1 );
-    scene.add( mesh );
-}
-
+// runder normal
 function renderCube() {
    
     if ( mesh !== undefined ) {
@@ -208,83 +169,14 @@ function renderCube() {
     shape[effectController.shape].morphAttributes.position = [];
 
     const positionAttribute = shape[effectController.shape].attributes.position;
-    console.log(positionAttribute);
-	// for the first morph target we'll move the mesh's vertices onto the surface of a sphere
-	const spherePositions = [];
-	// for the second morph target, we'll twist the meshs vertices
-	const twistPositions = [];
-	const direction = new THREE.Vector3( 0, 1, 0 ); // choisir le sens de la torsion ( x y z )
-	const vertex = new THREE.Vector3();
-    console.log(positionAttribute.count );
-    const face = effectController.face * (positionAttribute.count / 6 );
-	for ( let i = 0; i < positionAttribute.count ; i ++ ) {
-        
-        const x = positionAttribute.getX( i );
-	    const y = positionAttribute.getY( i );
-	    const z = positionAttribute.getZ( i );
-        if(x != 1 &&  y != 1 ){
-            spherePositions.push(
-                x * Math.sqrt( 1 - ( y * y / 2 ) - ( z * z / 2 ) + ( y * y * z * z / 3 ) ),
-                y * Math.sqrt( 1 - ( z * z / 2 ) - ( x * x / 2 ) + ( z * z * x * x / 3 ) ),
-                z * Math.sqrt( 1 - ( x * x / 2 ) - ( y * y / 2 ) + ( x * x * y * y / 3 ) )
-                );
-            // stretch along the x-axis so we can see the twist better
-            vertex.set( x, y * 2 , z );
-            vertex.applyAxisAngle( direction, Math.PI * y / 2 ).toArray( twistPositions, twistPositions.length );
-        }else{
-
-            spherePositions.push(x,y,z);
-            vertex.set( x, y * 2 , z );
-            vertex.toArray( twistPositions, twistPositions.length );        
-        
-        }
-	    
-        
-		
-    }
-
     
-	// add the spherical positions as the first morph target
-	shape[effectController.shape].morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
-	// add the twisted positions as the second morph target
-	shape[effectController.shape].morphAttributes.position[ 1 ] = new THREE.Float32BufferAttribute( twistPositions, 3 );
-
-    mesh = new THREE.Mesh( shape[effectController.shape], mat[effectController.newShading] );
-    mesh.morphTargetInfluences[ 0 ] = effectController.sphere;
-    mesh.morphTargetInfluences[ 1 ] = effectController.torsion;
-
-    addMeshToScene();
-
-}
-
-// runder normal
-function renderCube2() {
-   
-    if ( mesh !== undefined ) {
-
-        mesh.geometry.dispose();
-        scene.remove( mesh );
-
-    }
-    mat['wireframe'] = new THREE.MeshStandardMaterial( { wireframe: true } );
-    mat['flat'] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
-    mat['smooth'] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
-    mat['basic'] = new THREE.MeshBasicMaterial();
-
-    // const geometry = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
-    shape['Box'] = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
-    shape['Sphere']= new THREE.SphereGeometry(effectController.height,effectController.tess,effectController.tess);
-    shape[effectController.shape].morphAttributes.position = [];
-
-    const positionAttribute = shape[effectController.shape].attributes.position;
-    console.log(positionAttribute);
 	// for the first morph target we'll move the mesh's vertices onto the surface of a sphere
 	const spherePositions = [];
 	// for the second morph target, we'll twist the meshs vertices
 	const twistPositions = [];
-	const direction = new THREE.Vector3( 0, 1, 0 ); // choisir le sens de la torsion ( x y z )
+	const direction = new THREE.Vector3( effectController.x, effectController.y, effectController.z ); // choisir le sens de la torsion ( x y z )
 	const vertex = new THREE.Vector3();
-    console.log(positionAttribute.count );
+    
     const face = effectController.face * (positionAttribute.count / 6 );
 	for ( let i = 0; i < positionAttribute.count ; i ++ ) {
             const x = positionAttribute.getX( i );
@@ -340,8 +232,8 @@ function renderShpere() {
 
 function renderUploadedShape(){
     const meshCopyGeo = mesh.geometry;
-    const morph0 = mesh.morphTargetInfluences[0];
-    const morph1 = mesh.morphTargetInfluences[1];
+    console.log(meshCopyGeo);
+    console.log(morph0);
     if ( mesh !== undefined ) {
 
         mesh.geometry.dispose();
@@ -352,10 +244,11 @@ function renderUploadedShape(){
     mat['flat'] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
     mat['smooth'] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
     mat['basic'] = new THREE.MeshBasicMaterial();
-    meshCopyGeo.morphAttributes.position = [];
+    const cube = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
+    cube.morphAttributes.position = [];
 
-    const positionAttribute = meshCopyGeo.attributes.position;
-    console.log(positionAttribute.count);
+    const positionAttribute = cube.attributes.position;
+
 	// for the first morph target we'll move the mesh's vertices onto the surface of a sphere
 	const spherePositions = [];
 	// for the second morph target, we'll twist the meshs vertices
@@ -363,7 +256,7 @@ function renderUploadedShape(){
 	const direction = new THREE.Vector3( 0, 1, 0 ); // choisir le sens de la torsion ( x y z )
 	const vertex = new THREE.Vector3();
 
-	for ( let i = 0; i < positionAttribute.count / 6 ; i ++ ) {
+	for ( let i = 0; i < positionAttribute.count ; i ++ ) {
 		const x = positionAttribute.getX( i );
 		const y = positionAttribute.getY( i );
 		const z = positionAttribute.getZ( i );
@@ -378,16 +271,19 @@ function renderUploadedShape(){
         }
     
 	// add the spherical positions as the first morph target
-	meshCopyGeo.morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
+	cube.morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
 	// add the twisted positions as the second morph target
-	meshCopyGeo.morphAttributes.position[ 1 ] = new THREE.Float32BufferAttribute( twistPositions, 3 );
+	cube.morphAttributes.position[ 1 ] = new THREE.Float32BufferAttribute( twistPositions, 3 );
 
 
-    mesh = new THREE.Mesh( meshCopyGeo, mat[effectController.newShading] );
+    mesh = new THREE.Mesh( cube, mat[effectController.newShading] );
     
+    mesh.morphTargetInfluences[ 0 ] = effectController.sphere + morph0;
+    mesh.morphTargetInfluences[ 1 ] = effectController.torsion + morph1;
 
-    mesh.morphTargetInfluences[ 0 ] = effectController.sphere;
-    mesh.morphTargetInfluences[ 1 ] = effectController.torsion;
+    console.log(mesh.morphTargetInfluences[ 0 ]);
+
+
     addMeshToScene();
 
 }
@@ -535,7 +431,8 @@ function loadGLTFile() {
     
         }
         mesh = gltf.scene.children[0];
-        
+        morph0 = mesh.morphTargetInfluences[0];
+        morph1 = mesh.morphTargetInfluences[1];
         scene.add( mesh );
     
     }, undefined, function ( error ) {
@@ -558,7 +455,7 @@ function handleSubmit(event) {
   console.log(url);
   console.log(formData);
   console.log(searchParams);
-/** @type {Parameters<fetch>[1]} */
+/* @type {Parameters<fetch>[1]} */
 const fetchOptions = {
     method: form.method,
   };
@@ -585,14 +482,6 @@ const fetchOptions = {
 // mettre dans prusa 
 
 
-// checker dautre deformation possible maybe 
-
-
-// ajouter control par arduino ?
-// ajouter serv node ? 
-// keep track des changement ? 
-// genre save les evolution dans un excel ?
-// bouger les lights ? 
 
 // rajouter un truc qui recup le glb pour le reinjecter dedans 
 // checker pour dl en stl directement 

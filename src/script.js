@@ -5,7 +5,6 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { NURBSSurface } from 'three/addons/curves/NURBSSurface.js';
 import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
-
 let controls, mesh, renderer, scene, camera, effectController, exporter,  mat = {};
 let radianX = 0 , radianY = 0, radianZ = 0 ;
 let ambientLight;
@@ -43,7 +42,7 @@ function init() {
     const material = new THREE.MeshLambertMaterial( {  side: THREE.DoubleSide } );
     mesh = new THREE.Mesh( geometry, material );
     mesh.material.color.set( "grey" );
-    mesh.position.set(0,1,0)
+    mesh.position.set(0,1,0);
 
     scene.add( mesh );
     //scene.add( gridHelper );
@@ -136,7 +135,6 @@ function setupGui() {
     exportFolder.close();
 
 
-
 }
 
 
@@ -198,7 +196,6 @@ function renderCube() {
         }
 	    
     
-    console.log(shape[effectController.shape].morphAttributes.position[ 0 ]);
 	// add the spherical positions as the first morph target
 	shape[effectController.shape].morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
 	// add the twisted positions as the second morph target
@@ -211,7 +208,6 @@ function renderCube() {
     addMeshToScene();
 
 }
-
 
 
 
@@ -319,9 +315,6 @@ function renderUploadedShape(){
     
     mesh.morphTargetInfluences[ 0 ] = effectController.sphere + morph0;
     mesh.morphTargetInfluences[ 1 ] = effectController.torsion + morph1;
-
-    console.log(mesh.morphTargetInfluences[ 0 ]);
-
 
     addMeshToScene();
 
@@ -458,11 +451,11 @@ function addMeshToScene(){
     mesh.rotation.z = radianZ;
 }
 
-function loadGLTFile() {
+function loadGLTFile(URL) {
     loader = new GLTFLoader();
     effectController.shape = 'upload';
 
-    loader.load( 'model.glb', function ( gltf ) {
+    loader.load( URL, function ( gltf ) {
         if ( mesh !== undefined ) {
 
             mesh.geometry.dispose();
@@ -481,39 +474,45 @@ function loadGLTFile() {
     } );
 }
 
-const form = document.querySelector('form');
-form.addEventListener('submit', handleSubmit);
+
+document.addEventListener( 'dragover', function ( event ) {
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+
+} );
 
 
-function handleSubmit(event) {
-  const form = event.currentTarget;
-  const url = new URL(form.action);
-  const formData = new FormData(form);
-  const searchParams = new URLSearchParams(formData);
-  console.log(form);
-  console.log(url);
-  console.log(formData);
-  console.log(searchParams);
-/* @type {Parameters<fetch>[1]} */
-const fetchOptions = {
-    method: form.method,
-  };
+document.addEventListener( 'drop', function ( event ) {
 
-  if (form.method.toLowerCase() === 'post') {
-    if (form.enctype === 'multipart/form-data') {
-      fetchOptions.body = formData;
+    event.preventDefault();
+
+    if ( event.dataTransfer.types[ 0 ] === 'text/plain' ) return; // Outliner drop
+
+    if ( event.dataTransfer.items ) {
+        // DataTransferItemList supports folders
+        [...event.dataTransfer.items].forEach((item, i) => {
+            // If dropped items aren't files, reject them
+            if (item.kind === "file") {
+              const file = item.getAsFile();
+              console.log(file);
+              console.log(`… file[${i}].name = ${file.name}`);
+              const url = URL.createObjectURL(file);
+              loadGLTFile(url);
+              //const arrayBuffer = await file.arrayBuffer();
+            }
+          });
+        //editor.loader.loadItemList( event.dataTransfer.items );
+
     } else {
-      fetchOptions.body = searchParams;
+        console.log("hello2");
+
+        console.log(event.dataTransfer.files);
+        //editor.loader.loadFiles( event.dataTransfer.files );
+
     }
-  } else {
-    url.search = searchParams;
-  }
 
-  fetch(url, fetchOptions);
-
-  event.preventDefault();
-}
-
+} );
 // save en glb 
 // faut stop le spin et mettre en basic mat
 // puis mettre sur blender 

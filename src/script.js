@@ -46,10 +46,10 @@ function init() {
     mesh.position.set(0,1,0)
 
     scene.add( mesh );
-    scene.add( gridHelper );
+    //scene.add( gridHelper );
 
     const axesHelper = new THREE.AxesHelper( 5 );
-    scene.add( axesHelper );
+    //scene.add( axesHelper );
     
     scene.add( dirLight1 );
     //scene.add( helper1 );
@@ -113,21 +113,28 @@ function setupGui() {
     };
     
     const gui = new GUI();
-    
-    gui.add(effectController, 'spin' ).name( 'Spining' );
-    gui.add(effectController, 'shape',['Box','Sphere', 'upload']).name('Shape').onChange(render);
-    gui.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).onChange(render);
-    gui.add(effectController, 'sphere').min(-2).max(2).step(0.01).onChange(render);
-    gui.add(effectController,'torsion').min(-2).max(2).step(0.01).onChange(render);
-    gui.add(effectController, 'width').min( 0 ).max( 2 ).onChange(render);
-    gui.add(effectController, 'height').min( 0 ).max( 2 ).onChange(render);
-    gui.add(effectController, 'depth').min( 0 ).max( 2 ).onChange(render);
-    gui.add(effectController, 'tess').min(1).max(64).step(1).onChange(render);
-    gui.add(effectController, 'exportGLTF' ).name( 'Export' );
-    gui.add(effectController, 'upload').name('upload');
-    gui.add(effectController, 'x' ).name( 'X' );
-    gui.add(effectController, 'y' ).name( 'Y' );
-    gui.add(effectController, 'z' ).name( 'Z' );
+    const visuFolder = gui.addFolder("Vue");
+    visuFolder.add(effectController, 'spin' ).name( 'Spining' );
+    visuFolder.add(effectController, 'shape',['Box','Sphere']).name('Shape').onChange(render);
+    visuFolder.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).onChange(render);
+
+    const effectFolder = gui.addFolder("Effet");
+    effectFolder.add(effectController, 'sphere').min(-2).max(2).step(0.01).onChange(render);
+    effectFolder.add(effectController,'torsion').min(-2).max(2).step(0.01).onChange(render);
+    effectFolder.add(effectController, 'width').min( 0 ).max( 2 ).onChange(render);
+    effectFolder.add(effectController, 'height').min( 0 ).max( 2 ).onChange(render);
+    effectFolder.add(effectController, 'depth').min( 0 ).max( 2 ).onChange(render);
+    effectFolder.add(effectController, 'tess').min(1).max(64).step(1).onChange(render);
+    const torsionFolder = gui.addFolder("Sens de torsion ")
+    torsionFolder.add(effectController, 'x' ).name( 'X' );
+    torsionFolder.add(effectController, 'y' ).name( 'Y' );
+    torsionFolder.add(effectController, 'z' ).name( 'Z' );
+
+    const exportFolder = gui.addFolder('Fichier')
+    exportFolder.add(effectController, 'exportGLTF' ).name( 'Télécharger ' );
+    exportFolder.add(effectController, 'upload').name('upload');
+    exportFolder.close();
+
 
 
 }
@@ -148,8 +155,6 @@ function render() {
 
 
 
-
-// runder normal
 function renderCube() {
    
     if ( mesh !== undefined ) {
@@ -268,8 +273,6 @@ function renderShpere() {
 
 function renderUploadedShape(){
     const meshCopyGeo = mesh.geometry;
-    console.log(meshCopyGeo);
-    console.log(morph0);
     if ( mesh !== undefined ) {
 
         mesh.geometry.dispose();

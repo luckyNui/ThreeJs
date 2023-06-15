@@ -104,7 +104,7 @@ function setupGui() {
         spin: false,
         newShading: 'flat',
         exportGLTF : exportGLTF,
-        tess : 1,
+        tess : 5,
         shape : 'Box',
         upload : loadGLTFile,
         x : false,
@@ -177,7 +177,6 @@ function renderCube() {
 	const direction = new THREE.Vector3( effectController.x, effectController.y, effectController.z ); // choisir le sens de la torsion ( x y z )
 	const vertex = new THREE.Vector3();
     
-    const face = effectController.face * (positionAttribute.count / 6 );
 	for ( let i = 0; i < positionAttribute.count ; i ++ ) {
             const x = positionAttribute.getX( i );
 	        const y = positionAttribute.getY( i );
@@ -194,7 +193,7 @@ function renderCube() {
         }
 	    
     
-    
+    console.log(shape[effectController.shape].morphAttributes.position[ 0 ]);
 	// add the spherical positions as the first morph target
 	shape[effectController.shape].morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
 	// add the twisted positions as the second morph target
@@ -218,14 +217,51 @@ function renderShpere() {
         scene.remove( mesh );
 
     }
+
     mat['wireframe'] = new THREE.MeshStandardMaterial( { wireframe: true } );
     mat['flat'] = new THREE.MeshPhongMaterial( { specular: 0x000000, flatShading: true, side: THREE.DoubleSide } );
     mat['smooth'] = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide } );
     mat['basic'] = new THREE.MeshBasicMaterial();
 
-    const sphere = new THREE.SphereGeometry(effectController.height,effectController.tess,effectController.tess);
-    mesh = new THREE.Mesh( sphere, mat[effectController.newShading] );
+    shape['Box'] = new THREE.BoxGeometry( effectController.height,effectController.width, effectController.depth, effectController.tess, effectController.tess,effectController.tess );
+    shape['Sphere']= new THREE.SphereGeometry(effectController.height,effectController.tess,effectController.tess);
+    shape[effectController.shape].morphAttributes.position = [];
 
+
+    const positionAttribute = shape[effectController.shape].attributes.position;
+    
+	// for the first morph target we'll move the mesh's vertices onto the surface of a sphere
+	const spherePositions = [];
+	// for the second morph target, we'll twist the meshs vertices
+	const twistPositions = [];
+	const direction = new THREE.Vector3( effectController.x, effectController.y, effectController.z ); // choisir le sens de la torsion ( x y z )
+	const vertex = new THREE.Vector3();
+    
+	for ( let i = 0; i < positionAttribute.count ; i ++ ) {
+            const x = positionAttribute.getX( i );
+	        const y = positionAttribute.getY( i );
+	        const z = positionAttribute.getZ( i );
+            spherePositions.push(
+                x * Math.sqrt( 1 - ( y * y / 2 ) - ( z * z / 2 ) + ( y * y * z * z / 3 ) ),
+                y * Math.sqrt( 1 - ( z * z / 2 ) - ( x * x / 2 ) + ( z * z * x * x / 3 ) ),
+                z * Math.sqrt( 1 - ( x * x / 2 ) - ( y * y / 2 ) + ( x * x * y * y / 3 ) )
+                );
+            // stretch along the x-axis so we can see the twist better
+            vertex.set( x, y * 2 , z );
+            vertex.applyAxisAngle( direction, Math.PI * y / 2 ).toArray( twistPositions, twistPositions.length );
+   
+        }
+	    
+    
+
+	// add the spherical positions as the first morph target
+	shape[effectController.shape].morphAttributes.position[ 0 ] = new THREE.Float32BufferAttribute( spherePositions, 3 );
+	// add the twisted positions as the second morph target
+	shape[effectController.shape].morphAttributes.position[ 1 ] = new THREE.Float32BufferAttribute( twistPositions, 3 );
+
+    mesh = new THREE.Mesh( shape[effectController.shape], mat[effectController.newShading] );
+    mesh.morphTargetInfluences[ 0 ] = effectController.sphere;
+    mesh.morphTargetInfluences[ 1 ] = effectController.torsion;
     addMeshToScene();
    
 }

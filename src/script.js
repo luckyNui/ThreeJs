@@ -132,7 +132,7 @@ function setupGui() {
 
     const exportFolder = gui.addFolder('Fichier')
     exportFolder.add(effectController, 'exportGLTF' ).name( 'Télécharger ' );
-    exportFolder.add(effectController, 'upload').name('upload');
+    //exportFolder.add(effectController, 'upload').name('upload');
     exportFolder.close();
 
 

@@ -118,8 +118,8 @@ function setupGui() {
     visuFolder.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).onChange(render);
 
     const effectFolder = gui.addFolder("Effet");
-    effectFolder.add(effectController, 'sphere').min(-2).max(2).step(0.01).onChange(render);
-    effectFolder.add(effectController,'torsion').min(-2).max(2).step(0.01).onChange(render);
+    effectFolder.add(effectController, 'sphere').min(-100).max(200).step(0.01).onChange(render);
+    effectFolder.add(effectController,'torsion').min(-100).max(100).step(0.01).onChange(render);
     effectFolder.add(effectController, 'width').min( 0 ).max( 2 ).onChange(render);
     effectFolder.add(effectController, 'height').min( 0 ).max( 2 ).onChange(render);
     effectFolder.add(effectController, 'depth').min( 0 ).max( 2 ).onChange(render);
@@ -412,7 +412,7 @@ function createControl() {
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
     controls.minDistance = 1;
-    controls.maxDistance = 50;
+    controls.maxDistance = 1000;
     controls.maxPolarAngle = Math.PI / 2;
 }
 

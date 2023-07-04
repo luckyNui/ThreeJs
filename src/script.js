@@ -13,7 +13,24 @@ let shape = {};
 let morph0 , morph1;
 let loader ;
 
-let socket = new WebSocket("ws://localhost:3000/");
+
+effectController = {
+    width: 1,
+    height : 1,
+    depth : 1,
+    torsion: 0,
+    sphere : 0,
+    spin: false,
+    newShading: 'flat',
+    exportGLTF : exportGLTF,
+    tess : 5,
+    shape : 'Box',
+    upload : loadGLTFile,
+    x : false,
+    y : true,
+    z : false
+};
+let socket = new WebSocket("ws://localhost:4000");
 
 socket.onopen = function(e) {
   alert("[open] Connection established");
@@ -22,8 +39,8 @@ socket.onopen = function(e) {
 };
 
 socket.onmessage = function(event) {
-  alert(`[message] Data received from server: ${event.data}`);
-  update(even.data);
+  console.log(`[message] Data received from server: ${event.data}`);
+  update(event.data);
 };
 
 socket.onclose = function(event) {
@@ -118,22 +135,6 @@ function animate() {
 
 function setupGui() {
 
-    effectController = {
-        width: 1,
-        height : 1,
-        depth : 1,
-        torsion: 0,
-        sphere : 0,
-        spin: false,
-        newShading: 'flat',
-        exportGLTF : exportGLTF,
-        tess : 5,
-        shape : 'Box',
-        upload : loadGLTFile,
-        x : false,
-        y : true,
-        z : false
-    };
     
     const gui = new GUI();
     const visuFolder = gui.addFolder("Vue");
@@ -540,7 +541,31 @@ document.addEventListener( 'drop', function ( event ) {
 
 
 function update(data) {
-    return;
+    let Json = JSON.parse(data);
+    console.log(Json);
+    console.log(Json.width);
+    if(Json.newShading) {
+        effectController.newShading = Json.newShading;
+    }
+    if(Json.tess) {
+        effectController.tess = Json.tess;
+    }
+    if(Json.sphere) {
+        effectController.sphere = Json.sphere;
+    }
+    if(Json.torsion) {
+        effectController.torsion = Json.torsion;
+    }
+    if(Json.width){
+        effectController.width = Json.width;
+    }
+    if(Json.depth){
+        effectController.depth = Json.depth;
+    }
+    if(Json.height) {
+        effectController.height = Json.height;
+    }
+    render();
 };
 // save en glb 
 // faut stop le spin et mettre en basic mat

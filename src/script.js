@@ -3,8 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { NURBSSurface } from 'three/addons/curves/NURBSSurface.js';
-import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
+
 let controls, mesh, renderer, scene, camera, effectController, exporter,  mat = {};
 let radianX = 0 , radianY = 0, radianZ = 0 ;
 let ambientLight;
@@ -14,7 +13,32 @@ let shape = {};
 let morph0 , morph1;
 let loader ;
 
+let socket = new WebSocket("ws://localhost:3000/");
 
+socket.onopen = function(e) {
+  alert("[open] Connection established");
+  console.log("Sending to server");
+  socket.send("My name is John");
+};
+
+socket.onmessage = function(event) {
+  alert(`[message] Data received from server: ${event.data}`);
+  update(even.data);
+};
+
+socket.onclose = function(event) {
+  if (event.wasClean) {
+    alert(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+  } else {
+    // e.g. server process killed or network down
+    // event.code is usually 1006 in this case
+    alert('[close] Connection died');
+  }
+};
+
+socket.onerror = function(error) {
+  alert(`[error]`);
+};
 
 
 
@@ -513,6 +537,11 @@ document.addEventListener( 'drop', function ( event ) {
     }
 
 } );
+
+
+function update(data) {
+    return;
+};
 // save en glb 
 // faut stop le spin et mettre en basic mat
 // puis mettre sur blender 

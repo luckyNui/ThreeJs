@@ -30,9 +30,10 @@ effectController = {
     y : true,
     z : false
 };
+
 //let socket = new WebSocket("wss://t3l-collector-backend.herokuapp.com/?listen=110");
 let socket = new WebSocket("ws://localhost:4000/");
-
+//let socket = new WebSocket("wss://35.234.252.224:8080/");
 
 socket.onopen = function(e) {
   alert("[open] Connection established");
@@ -58,8 +59,6 @@ socket.onclose = function(event) {
 socket.onerror = function(error) {
   console.log((`[error]`));
 };
-
-
 
 
 init();
@@ -140,21 +139,21 @@ function setupGui() {
     
     const gui = new GUI();
     const visuFolder = gui.addFolder("Vue");
-    visuFolder.add(effectController, 'spin' ).name( 'Spining' );
-    visuFolder.add(effectController, 'shape',['Box','Sphere']).name('Shape').onChange(render);
-    visuFolder.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).onChange(render);
+    visuFolder.add(effectController, 'spin' ).listen().name( 'Spining' );
+    visuFolder.add(effectController, 'shape',['Box','Sphere']).name('Shape').listen().onChange(render);
+    visuFolder.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).listen().onChange(render);
 
     const effectFolder = gui.addFolder("Effet");
-    effectFolder.add(effectController, 'sphere').min(-100).max(200).step(0.01).onChange(render);
-    effectFolder.add(effectController,'torsion').min(-100).max(100).step(0.01).onChange(render);
-    effectFolder.add(effectController, 'width').min( 0 ).max( 2 ).onChange(render);
-    effectFolder.add(effectController, 'height').min( 0 ).max( 2 ).onChange(render);
-    effectFolder.add(effectController, 'depth').min( 0 ).max( 2 ).onChange(render);
-    effectFolder.add(effectController, 'tess').min(1).max(64).step(1).onChange(render);
+    effectFolder.add(effectController, 'sphere').min(-100).max(200).step(0.01).listen().onChange(render);
+    effectFolder.add(effectController,'torsion').min(-100).max(100).step(0.01).listen().onChange(render);
+    effectFolder.add(effectController, 'width').min( 0 ).max( 2 ).listen().onChange(render);
+    effectFolder.add(effectController, 'height').min( 0 ).max( 2 ).listen().onChange(render);
+    effectFolder.add(effectController, 'depth').min( 0 ).max( 2 ).listen().onChange(render);
+    effectFolder.add(effectController, 'tess').min(1).max(64).step(1).listen().onChange(render);
     const torsionFolder = gui.addFolder("Sens de torsion ")
-    torsionFolder.add(effectController, 'x' ).name( 'X' );
-    torsionFolder.add(effectController, 'y' ).name( 'Y' );
-    torsionFolder.add(effectController, 'z' ).name( 'Z' );
+    torsionFolder.add(effectController, 'x' ).listen().name( 'X' );
+    torsionFolder.add(effectController, 'y' ).listen().name( 'Y' );
+    torsionFolder.add(effectController, 'z' ).listen().name( 'Z' );
 
     const exportFolder = gui.addFolder('Fichier')
     exportFolder.add(effectController, 'exportGLTF' ).name( 'Télécharger ' );
@@ -163,8 +162,6 @@ function setupGui() {
 
 
 }
-
-
 
 
 function render() {
@@ -176,8 +173,6 @@ function render() {
         renderUploadedShape();
     }
 }
-
-
 
 
 function renderCube() {
@@ -544,29 +539,44 @@ document.addEventListener( 'drop', function ( event ) {
 
 function update(data) {
     let Json = JSON.parse(data);
-    console.log(Json);
-    console.log(Json.width);
-    if(Json.newShading) {
-        effectController.newShading = Json.newShading;
+    let s = Json[0];
+    let p = Json[1];
+    
+    if(p.newShading) {
+        effectController.newShading = p.newShading;
     }
-    if(Json.tess) {
-        effectController.tess = Json.tess;
+    if(p.tess) {
+        effectController.tess = p.tess;
     }
-    if(Json.sphere) {
-        effectController.sphere = Json.sphere;
+    if(p.sphere) {
+        effectController.sphere = p.sphere;
     }
-    if(Json.torsion) {
-        effectController.torsion = Json.torsion;
+    if(p.torsion) {
+        effectController.torsion = p.torsion;
     }
-    if(Json.width){
-        effectController.width = Json.width;
+    if(p.width){
+        effectController.width = p.width;
     }
-    if(Json.depth){
-        effectController.depth = Json.depth;
+    if(p.depth){
+        effectController.depth = p.depth;
     }
-    if(Json.height) {
-        effectController.height = Json.height;
+    if(p.height) {
+        effectController.height = p.height;
     }
+    if(p.shape) {
+        effectController.shape = p.shape;
+    }
+    if(typeof p.x !== 'undefined'){
+        effectController.x = p.x;
+    }
+    if(typeof p.y !== 'undefined'){
+        effectController.y = p.y;
+    }
+    if(typeof p.z !== 'undefined'){
+        effectController.z = p.z;
+    }
+    console.log(p.y);
+    console.log(effectController.y);
     render();
 };
 // save en glb 
@@ -584,5 +594,3 @@ function update(data) {
 // deployer le site pour vanessa
 
 
-// ajouter le drap and drop ( ex en message sur slack )
-// pour load un fichier juste changer le hmtml et rajoyer un endroit ou laod le ficher (copier exemple three js )

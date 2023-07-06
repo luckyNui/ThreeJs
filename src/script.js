@@ -30,7 +30,9 @@ effectController = {
     y : true,
     z : false
 };
-let socket = new WebSocket("ws://localhost:4000");
+//let socket = new WebSocket("wss://t3l-collector-backend.herokuapp.com/?listen=110");
+let socket = new WebSocket("ws://localhost:4000/");
+
 
 socket.onopen = function(e) {
   alert("[open] Connection established");

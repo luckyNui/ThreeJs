@@ -56,7 +56,7 @@ socket.onclose = function(event) {
 };
 
 socket.onerror = function(error) {
-  alert(`[error]`);
+  console.log((`[error]`));
 };
 
 

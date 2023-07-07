@@ -3,8 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { NURBSSurface } from 'three/addons/curves/NURBSSurface.js';
-import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
+
 let controls, mesh, renderer, scene, camera, effectController, exporter,  mat = {};
 let radianX = 0 , radianY = 0, radianZ = 0 ;
 let ambientLight;
@@ -15,8 +14,51 @@ let morph0 , morph1;
 let loader ;
 
 
+effectController = {
+    width: 1,
+    height : 1,
+    depth : 1,
+    torsion: 0,
+    sphere : 0,
+    spin: false,
+    newShading: 'flat',
+    exportGLTF : exportGLTF,
+    tess : 5,
+    shape : 'Box',
+    upload : loadGLTFile,
+    x : false,
+    y : true,
+    z : false
+};
 
+let socket = new WebSocket("wss://t3l-collector-backend.herokuapp.com/?listen=75");
+//let socket = new WebSocket("ws://localhost:4000/");
+//let socket = new WebSocket("wss://35.234.252.224:8080/");
 
+socket.onopen = function(e) {
+  alert("[open] Connection established");
+  console.log("Sending to server");
+  socket.send("My name is John");
+};
+
+socket.onmessage = function(event) {
+  console.log(`[message] Data received from server: ${event.data}`);
+  update(event.data);
+};
+
+socket.onclose = function(event) {
+  if (event.wasClean) {
+    alert(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+  } else {
+    // e.g. server process killed or network down
+    // event.code is usually 1006 in this case
+    alert('[close] Connection died');
+  }
+};
+
+socket.onerror = function(error) {
+  console.log((`[error]`));
+};
 
 
 init();
@@ -94,40 +136,24 @@ function animate() {
 
 function setupGui() {
 
-    effectController = {
-        width: 1,
-        height : 1,
-        depth : 1,
-        torsion: 0,
-        sphere : 0,
-        spin: false,
-        newShading: 'flat',
-        exportGLTF : exportGLTF,
-        tess : 5,
-        shape : 'Box',
-        upload : loadGLTFile,
-        x : false,
-        y : true,
-        z : false
-    };
     
     const gui = new GUI();
     const visuFolder = gui.addFolder("Vue");
-    visuFolder.add(effectController, 'spin' ).name( 'Spining' );
-    visuFolder.add(effectController, 'shape',['Box','Sphere']).name('Shape').onChange(render);
-    visuFolder.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).onChange(render);
+    visuFolder.add(effectController, 'spin' ).listen().name( 'Spining' );
+    visuFolder.add(effectController, 'shape',['Box','Sphere']).name('Shape').listen().onChange(render);
+    visuFolder.add(effectController, 'newShading', [ 'wireframe', 'flat', 'smooth','basic' ] ).name( 'Shading' ).listen().onChange(render);
 
     const effectFolder = gui.addFolder("Effet");
-    effectFolder.add(effectController, 'sphere').min(-100).max(200).step(0.01).onChange(render);
-    effectFolder.add(effectController,'torsion').min(-100).max(100).step(0.01).onChange(render);
-    effectFolder.add(effectController, 'width').min( 0 ).max( 2 ).onChange(render);
-    effectFolder.add(effectController, 'height').min( 0 ).max( 2 ).onChange(render);
-    effectFolder.add(effectController, 'depth').min( 0 ).max( 2 ).onChange(render);
-    effectFolder.add(effectController, 'tess').min(1).max(64).step(1).onChange(render);
+    effectFolder.add(effectController, 'sphere').min(-100).max(200).step(0.01).listen().onChange(render);
+    effectFolder.add(effectController,'torsion').min(-100).max(100).step(0.01).listen().onChange(render);
+    effectFolder.add(effectController, 'width').min( 0 ).max( 2 ).listen().onChange(render);
+    effectFolder.add(effectController, 'height').min( 0 ).max( 2 ).listen().onChange(render);
+    effectFolder.add(effectController, 'depth').min( 0 ).max( 2 ).listen().onChange(render);
+    effectFolder.add(effectController, 'tess').min(1).max(64).step(1).listen().onChange(render);
     const torsionFolder = gui.addFolder("Sens de torsion ")
-    torsionFolder.add(effectController, 'x' ).name( 'X' );
-    torsionFolder.add(effectController, 'y' ).name( 'Y' );
-    torsionFolder.add(effectController, 'z' ).name( 'Z' );
+    torsionFolder.add(effectController, 'x' ).listen().name( 'X' );
+    torsionFolder.add(effectController, 'y' ).listen().name( 'Y' );
+    torsionFolder.add(effectController, 'z' ).listen().name( 'Z' );
 
     const exportFolder = gui.addFolder('Fichier')
     exportFolder.add(effectController, 'exportGLTF' ).name( 'Télécharger ' );
@@ -136,8 +162,6 @@ function setupGui() {
 
 
 }
-
-
 
 
 function render() {
@@ -149,8 +173,6 @@ function render() {
         renderUploadedShape();
     }
 }
-
-
 
 
 function renderCube() {
@@ -513,6 +535,50 @@ document.addEventListener( 'drop', function ( event ) {
     }
 
 } );
+
+
+function update(data) {
+    let Json = JSON.parse(data);
+    let s = Json[0];
+    let p = Json;
+    
+    if(p.newShading) {
+        effectController.newShading = p.newShading;
+    }
+    if(p.tess) {
+        effectController.tess = p.tess;
+    }
+    if(p.sphere) {
+        effectController.sphere = p.sphere;
+    }
+    if(p.torsion) {
+        effectController.torsion = p.torsion;
+    }
+    if(p.width){
+        effectController.width = p.width;
+    }
+    if(p.depth){
+        effectController.depth = p.depth;
+    }
+    if(p.height) {
+        effectController.height = p.height;
+    }
+    if(p.shape) {
+        effectController.shape = p.shape;
+    }
+    if(typeof p.x !== 'undefined'){
+        effectController.x = p.x;
+    }
+    if(typeof p.y !== 'undefined'){
+        effectController.y = p.y;
+    }
+    if(typeof p.z !== 'undefined'){
+        effectController.z = p.z;
+    }
+    console.log(p.y);
+    console.log(effectController.y);
+    render();
+};
 // save en glb 
 // faut stop le spin et mettre en basic mat
 // puis mettre sur blender 
@@ -526,7 +592,3 @@ document.addEventListener( 'drop', function ( event ) {
 // quand tu es en mode mesh, get le mesh sans changer, genre comme faire dans le render
 // peut etre utiliser un switch case ?? 
 // deployer le site pour vanessa
-
-
-// ajouter le drap and drop ( ex en message sur slack )
-// pour load un fichier juste changer le hmtml et rajoyer un endroit ou laod le ficher (copier exemple three js )

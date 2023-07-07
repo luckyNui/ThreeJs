@@ -157,7 +157,7 @@ function setupGui() {
 
     const exportFolder = gui.addFolder('Fichier')
     exportFolder.add(effectController, 'exportGLTF' ).name( 'Télécharger ' );
-    exportFolder.add(effectController, 'upload').name('upload');
+    //exportFolder.add(effectController, 'upload').name('upload');
     exportFolder.close();
 
 
@@ -592,5 +592,3 @@ function update(data) {
 // quand tu es en mode mesh, get le mesh sans changer, genre comme faire dans le render
 // peut etre utiliser un switch case ?? 
 // deployer le site pour vanessa
-
-

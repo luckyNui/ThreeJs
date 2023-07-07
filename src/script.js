@@ -31,8 +31,8 @@ effectController = {
     z : false
 };
 
-//let socket = new WebSocket("wss://t3l-collector-backend.herokuapp.com/?listen=110");
-let socket = new WebSocket("ws://localhost:4000/");
+let socket = new WebSocket("wss://t3l-collector-backend.herokuapp.com/?listen=75");
+//let socket = new WebSocket("ws://localhost:4000/");
 //let socket = new WebSocket("wss://35.234.252.224:8080/");
 
 socket.onopen = function(e) {
@@ -540,7 +540,7 @@ document.addEventListener( 'drop', function ( event ) {
 function update(data) {
     let Json = JSON.parse(data);
     let s = Json[0];
-    let p = Json[1];
+    let p = Json;
     
     if(p.newShading) {
         effectController.newShading = p.newShading;

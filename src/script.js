@@ -33,7 +33,6 @@ effectController = {
 
 let socket = new WebSocket("wss://t3l-collector-backend.herokuapp.com/?listen=75");
 //let socket = new WebSocket("ws://localhost:4000/");
-//let socket = new WebSocket("wss://35.234.252.224:8080/");
 
 socket.onopen = function(e) {
   alert("[open] Connection established");
@@ -420,14 +419,13 @@ function createCamera() {
 function createRenderer() {
     renderer = new THREE.WebGLRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
-    //document.body.appendChild( renderer.domElement );
     document.getElementById("3d").appendChild(renderer.domElement);
 
 }
 
 function createControl() {
     controls = new OrbitControls( camera, renderer.domElement );
-    controls.listenToKeyEvents( window ); // optio
+    controls.listenToKeyEvents( window ); 
     //controls.addEventListener( 'change', renderer ); // call this only in static scenes (i.e., if there is no animation lo
 
     controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
@@ -527,11 +525,9 @@ document.addEventListener( 'drop', function ( event ) {
         //editor.loader.loadItemList( event.dataTransfer.items );
 
     } else {
-        console.log("hello2");
 
         console.log(event.dataTransfer.files);
         //editor.loader.loadFiles( event.dataTransfer.files );
-
     }
 
 } );
@@ -539,56 +535,43 @@ document.addEventListener( 'drop', function ( event ) {
 
 function update(data) {
     let Json = JSON.parse(data);
-    let s = Json[0];
-    let p = Json;
+   
     
-    if(p.newShading) {
-        effectController.newShading = p.newShading;
+    if(Json.newShading) {
+        effectController.newShading = Json.newShading;
     }
-    if(p.tess) {
-        effectController.tess = p.tess;
+    if(Json.tess) {
+        effectController.tess = Json.tess;
     }
-    if(p.sphere) {
-        effectController.sphere = p.sphere;
+    if(Json.sphere) {
+        effectController.sphere = Json.sphere;
     }
-    if(p.torsion) {
-        effectController.torsion = p.torsion;
+    if(Json.torsion) {
+        effectController.torsion = Json.torsion;
     }
-    if(p.width){
-        effectController.width = p.width;
+    if(Json.width){
+        effectController.width = Json.width;
     }
-    if(p.depth){
-        effectController.depth = p.depth;
+    if(Json.depth){
+        effectController.depth = Json.depth;
     }
-    if(p.height) {
-        effectController.height = p.height;
+    if(Json.height) {
+        effectController.height = Json.height;
     }
-    if(p.shape) {
-        effectController.shape = p.shape;
+    if(Json.shape) {
+        effectController.shape = Json.shape;
     }
-    if(typeof p.x !== 'undefined'){
-        effectController.x = p.x;
+    if(typeof Json.x !== 'undefined'){
+        effectController.x = Json.x;
     }
-    if(typeof p.y !== 'undefined'){
-        effectController.y = p.y;
+    if(typeof Json.y !== 'undefined'){
+        effectController.y = Json.y;
     }
-    if(typeof p.z !== 'undefined'){
-        effectController.z = p.z;
+    if(typeof Json.z !== 'undefined'){
+        effectController.z = Json.z;
     }
-    console.log(p.y);
-    console.log(effectController.y);
+
     render();
 };
-// save en glb 
-// faut stop le spin et mettre en basic mat
-// puis mettre sur blender 
-// save en slt
-// mettre dans prusa 
 
 
-
-// rajouter un truc qui recup le glb pour le reinjecter dedans 
-// checker pour dl en stl directement 
-// quand tu es en mode mesh, get le mesh sans changer, genre comme faire dans le render
-// peut etre utiliser un switch case ?? 
-// deployer le site pour vanessa
